@@ -12,6 +12,7 @@ let data = JSON.parse(rawdata);
 let editionSize = data.length;
 
 let rarityData = [];
+let rarityJson = [];
 
 // intialize layers to chart
 layerConfigurations.forEach((config) => {
@@ -21,6 +22,11 @@ layerConfigurations.forEach((config) => {
     // get elements for each layer
     let elementsForLayer = [];
     let elements = getElements(`${layersDir}/${layer.name}/`);
+    let layerName =
+      layer.options?.["displayName"] != undefined
+        ? layer.options?.["displayName"]
+        : layer.name;
+    let layerTraits = [];
     elements.forEach((element) => {
       // just get name and weight for each element
       let rarityDataElement = {
@@ -30,14 +36,19 @@ layerConfigurations.forEach((config) => {
       };
       elementsForLayer.push(rarityDataElement);
     });
-    let layerName =
-      layer.options?.["displayName"] != undefined
-        ? layer.options?.["displayName"]
-        : layer.name;
-    // don't include duplicate layers
-    if (!rarityData.includes(layer.name)) {
+    if (!rarityData.hasOwnProperty(layerName)) {
       // add elements for each layer to chart
+      //console.log(layerName);
       rarityData[layerName] = elementsForLayer;
+    } else {
+        // Only add elements that are not there yet.
+        let existingTraits = rarityData[layerName].map(x => x.trait);
+        //console.log(layerName, existingTraits);
+        elementsForLayer.forEach((element) => {
+            if(!existingTraits.includes(element.trait)){
+               rarityData[layerName].push(element);
+            }
+        });
     }
   });
 });
@@ -66,17 +77,31 @@ for (var layer in rarityData) {
     let chance =
       ((rarityData[layer][attribute].occurrence / editionSize) * 100).toFixed(2);
 
+    rarityData[layer][attribute].chance = chance
     // show two decimal places in percent
-    rarityData[layer][attribute].occurrence =
+    rarityData[layer][attribute].occurrenceTxt =
       `${rarityData[layer][attribute].occurrence} in ${editionSize} editions (${chance} %)`;
   }
 }
 
+//console.log("{traits:[");
 // print out rarity data
+//for (var layer in rarityData) {
+  //console.log(`${layer}:[`);
+  //for (var trait in rarityData[layer]) {
+    //console.log(rarityData[layer][trait]);
+  //}
+  //console.log("]")
+  //console.log(",");
+//}
+//console.log(rarityData);
+//console.log(JSON.stringify(rarityData));
+//console.log(JSON.stringify({rare:rarityData}));
+//
+
+var ux = {}
 for (var layer in rarityData) {
-  console.log(`Trait type: ${layer}`);
-  for (var trait in rarityData[layer]) {
-    console.log(rarityData[layer][trait]);
-  }
-  console.log();
+    ux[layer] = rarityData[layer]
 }
+console.log(JSON.stringify(ux));
+//console.log(ux);
